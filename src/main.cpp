@@ -15,7 +15,7 @@ const uint8_t displayHeight = 8;
 const uint16_t ledCount = displayWidth * displayHeight;
 rgb_color brushColor = (rgb_color){0,0,0}; // Default brush color is black
 rgb_color colors[ledCount];
-const uint8_t brightness = 2;
+const uint8_t brightness = 1;
 
 ESP8266WebServer server(80);
 APA102<dataPin, clockPin> ledStrip;
@@ -51,9 +51,15 @@ void clearDisplay(){
     }
 }
 
+
+uint8_t r(uint8_t exclusiveMax){
+    return rand() % exclusiveMax;
+}
+
+
 void randomizeDisplay(){
     for(int i=0;i<ledCount;i++){
-        colors[i]={rand() % 255, rand() % 255, rand() % 255};
+        colors[i]={r(255), r(255), r(255)};
     }
 }
 
@@ -63,6 +69,10 @@ void setBrushColor(rgb_color color){
 
 void setBrushColor(uint8_t r,uint8_t g,uint8_t b){
  brushColor = {r,g,b};
+}
+
+void setRandomBrushColor(){
+    setBrushColor(r(255),r(255),r(255));
 }
 
 void drawPixel(uint8_t x, uint8_t y){
@@ -129,18 +139,24 @@ void setup() {
 void loop() {
   ArduinoOTA.handle();
   server.handleClient();
-  clearDisplay();
-  setBrushColor(255,0,0);
-  drawRect(1,1,2,2);
-  setBrushColor(0,255,0);
-  drawSolidRect(5,4,3,2);
-  setBrushColor(45,88,230);
-  drawPixel(0,0);
-  drawPixel(17,0);
-  drawPixel(0,7);
-  drawPixel(17,7);
+  //clearDisplay();
+  setRandomBrushColor();
+  if(r(100) > 80){
+    drawSolidRect(r(18),r(7),r(18),r(7));
+  } else {
+    drawRect(r(18),r(7),r(18),r(7));
+  }
+//  setBrushColor(255,0,0);
+//  drawRect(1,1,2,2);
+//  setBrushColor(0,255,0);
+//  drawSolidRect(5,4,3,2);
+//  setBrushColor(45,88,230);
+//  drawPixel(0,0);
+//  drawPixel(17,0);
+//  drawPixel(0,7);
+//  drawPixel(17,7);
   //drawSolidRect(0,5,7,10);
   //randomizeDisplay();
   updateDisplay();
-  delay(30);
+  //delay(10);
 }
