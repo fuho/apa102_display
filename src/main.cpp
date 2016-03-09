@@ -15,7 +15,7 @@ const uint8_t displayHeight = 8;
 const uint16_t ledCount = displayWidth * displayHeight;
 rgb_color brushColor = (rgb_color){0,0,0}; // Default brush color is black
 rgb_color colors[ledCount];
-const uint8_t brightness = 1;
+const uint8_t brightness = 2;
 
 ESP8266WebServer server(80);
 APA102<dataPin, clockPin> ledStrip;
@@ -67,33 +67,37 @@ void setBrushColor(uint8_t r,uint8_t g,uint8_t b){
 
 void drawPixel(uint8_t x, uint8_t y){
     if(x >= displayWidth || y >= displayHeight) return; // Drawing outside disp.
+    if(y % 2 == 0){// Display is a zigzaged LED strip
     colors[y * displayWidth + x] = brushColor;
+    } else {
+    colors[(y+1) * displayWidth -1 - x] = brushColor;
+    }
 }
 
 void updateDisplay(){
       ledStrip.write(colors, ledCount, brightness);
 }
 
-void drawRect(uint8_t x, uint8_t y, uint8_t width, uint8_t height){
-    uint8_t maxX = x + width;
-    uint8_t maxY = y + height;
-    for(int y = 0; y <= maxY; y++){
-        if(y == 0 || y == maxY ){ // only fill if top or bottom or req
-            for(int x = 0; x <= maxX; x++){
+void drawRect(uint8_t minX, uint8_t minY, uint8_t width, uint8_t height){
+    uint8_t maxX = minX + width;
+    uint8_t maxY = minY + height;
+    for(int y = minY; y <= maxY; y++){
+        if(y == minY || y == maxY ){ // only fill if top or bottom row
+            for(int x = minX; x <= maxX; x++){
                 drawPixel(x,y);
             }
         } else {
-            drawPixel(x,y);
+            drawPixel(minX,y);
             drawPixel(maxX,y);
         }
     }
 }
 
-void drawSolidRect(uint8_t x, uint8_t y, uint8_t width, uint8_t height){
-    uint8_t maxX = x + width;
-    uint8_t maxY = y + height;
-    for(int y = 0; y <= maxY; y++){
-        for(int x = 0; x <= maxX; x++){
+void drawSolidRect(uint8_t minX, uint8_t minY, uint8_t width, uint8_t height){
+    uint8_t maxX = minX + width;
+    uint8_t maxY = minY + height;
+    for(int y = minY; y <= maxY; y++){
+        for(int x = minX; x <= maxX; x++){
             drawPixel(x,y);
         }
     }
@@ -126,9 +130,15 @@ void loop() {
   ArduinoOTA.handle();
   server.handleClient();
   clearDisplay();
-  setBrushColor(255,255,255);
-  drawRect(1,1,16,6);
-  //setBrushColor(187,255,19);
+  setBrushColor(255,0,0);
+  drawRect(1,1,2,2);
+  setBrushColor(0,255,0);
+  drawSolidRect(5,4,3,2);
+  setBrushColor(45,88,230);
+  drawPixel(0,0);
+  drawPixel(17,0);
+  drawPixel(0,7);
+  drawPixel(17,7);
   //drawSolidRect(0,5,7,10);
   //randomizeDisplay();
   updateDisplay();
