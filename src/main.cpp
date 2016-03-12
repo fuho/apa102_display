@@ -9,13 +9,20 @@ const char* ssid = "N16FU";
 const char* password = "masdostfest";
 const uint8_t clockPin = D5;
 const uint8_t dataPin = D7;
+// URL Constants
+const char* URL_ROOT = "/";
+const char* URL_ARGS = "/args";
+const char* URL_DISPLAY = "/display";
+// URL Parameters
+const char* PARAM_FRAME_BUFFER = "framebuffer";
 
 const uint8_t displayWidth = 18;
 const uint8_t displayHeight = 8;
 const uint16_t ledCount = displayWidth * displayHeight;
-rgb_color brushColor = (rgb_color){0,0,0}; // Default brush color is black
-rgb_color colors[ledCount];
 const uint8_t brightness = 1;
+rgb_color colors[ledCount];
+// Defaults
+rgb_color brushColor = (rgb_color){0,0,0}; // Default brush color is black
 
 ESP8266WebServer server(80);
 APA102<dataPin, clockPin> ledStrip;
@@ -63,6 +70,10 @@ void randomizeDisplay(){
     }
 }
 
+uint8_t hexToInt(String twoChars){
+    return (uint8_t) strtoul(twoChars.c_str(),NULL,16);
+}
+
 void setBrushColor(rgb_color color){
  brushColor = color;
 }
@@ -70,6 +81,15 @@ void setBrushColor(rgb_color color){
 void setBrushColor(uint8_t r,uint8_t g,uint8_t b){
  brushColor = {r,g,b};
 }
+
+void setBrushColor(String colorAsString){
+    uint8_t r,g,b;
+    r= hexToInt(colorAsString.substring(0,1));
+    g= hexToInt(colorAsString.substring(0,1));
+    b= hexToInt(colorAsString.substring(0,1));
+    setBrushColor(r,g,b);
+}
+
 
 void setRandomBrushColor(){
     setBrushColor(r(255),r(255),r(255));
@@ -113,6 +133,32 @@ void drawSolidRect(uint8_t minX, uint8_t minY, uint8_t width, uint8_t height){
     }
 }
 
+
+String getArgsInfo(){
+    String response = "";
+    for(int i = 0; i < server.args(); i++){
+        response += server.argName(i) + ": " + server.arg(i) + "\n";    
+    }
+    return response;
+}
+
+void setFrameBuffer(String colorsAsString){
+    for(int y =0; y < displayHeight; y++){
+        for(int x =0; x < displayWidth; x++){
+            String colorAsString = colorsAsString.substring(x*y*3,x*y*3+3);
+            setBrushColor(colorAsString);
+            drawPixel(x,y);
+        }
+    }
+}
+
+void handleDisplayRequest(){
+    if(server.hasArg(PARAM_FRAME_BUFFER)){
+        setFrameBuffer(server.arg(PARAM_FRAME_BUFFER));
+    }
+}
+
+
 void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -129,8 +175,17 @@ void setup() {
   // ArduinoOTA.setPassword((const char *)"123");
   ArduinoOTA.begin();
   
-  server.on("/", [](){
+  server.on(URL_ROOT, [](){
     server.send(200, "text/plain", "Accessed " + String(++counter) + " times.");
+  });
+
+  server.on(URL_ARGS, [](){
+    server.send(200, "text/plain", getArgsInfo());
+  });
+
+  server.on(URL_DISPLAY, [](){
+    handleDisplayRequest();    
+    server.send(200, "text/plain", String(micros()));
   });
   server.begin();
 }
@@ -140,12 +195,12 @@ void loop() {
   ArduinoOTA.handle();
   server.handleClient();
   //clearDisplay();
-  setRandomBrushColor();
-  if(r(100) > 80){
-    drawSolidRect(r(18),r(7),r(18),r(7));
-  } else {
-    drawRect(r(18),r(7),r(18),r(7));
-  }
+//  setRandomBrushColor();
+//  if(r(100) > 80){
+//    drawSolidRect(r(18),r(7),r(18),r(7));
+//  } else {
+//    drawRect(r(18),r(7),r(18),r(7));
+//  }
 //  setBrushColor(255,0,0);
 //  drawRect(1,1,2,2);
 //  setBrushColor(0,255,0);
