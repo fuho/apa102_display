@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="fuho">
+    <meta name="author" content="led display workbench">
+
+    <title>LedBench</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+          integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7"
+          crossorigin="anonymous">
+    <!-- Optional theme -->
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css"
+          integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r"
+          crossorigin="anonymous">
+
+</head>
+
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed"
+                    data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">Led Display Workbench</a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="#">Display</a></li>
+                <li><a href="#something-else">Something Else</a></li>
+            </ul>
+        </div>
+        <!--/.nav-collapse -->
+    </div>
+</nav>
+
+<div class="container">
+    <br/>
+    <br/>
+    <br/>
+
+    <div id="ledDisplay">
+    </div>
+    <div id="bufferString" style="white-space:pre;font-family: monospace;font-size: x-small; letter-spacing:0.03em;"></div>
+    <script>
+        function initDisplay() {
+            var width = 18;
+            var height = 8;
+            ledDisplay = document.getElementById("ledDisplay");
+            for (var y = 0; y < height; y++) {
+                for (var x = 0; x < width; x++) {
+                    ledDisplay.appendChild(newPixel());
+                }
+                ledDisplay.appendChild(document.createElement("br"));
+            }
+            
+        }
+
+        function newPixel(){
+            var ledPixel = document.createElement("input");
+            ledPixel.setAttribute("type","color");
+            ledPixel.setAttribute("value","#000000");
+            ledPixel.addEventListener("input", function() {
+                updateText();
+                var newMillis = Date.now();
+                if(newMillis - lastUploadMillis > 300){
+                    lastUploadMillis = newMillis;
+                    uploadBuffer()
+                }
+            }, false);
+            return ledPixel;
+        }
+
+        function getFrameBuffer() {
+            var colors = document.getElementById("ledDisplay").getElementsByTagName("input");
+            var frameBuffer = "";
+            for (var i = 0, item; item = colors[i]; i++) {
+                frameBuffer += item.value.substr(1);
+            }
+            return frameBuffer;
+        }
+
+        function updateText() {
+            var splitText = getFrameBuffer().match(/.{1,108}/g).map(function (row) {
+                return row.match(/.{1,6}/g).join(" ");
+            }).join("\n");
+            document.getElementById("bufferString").textContent = splitText;
+        }
+
+        function uploadBuffer(){
+            (new Image).src = 'http://10.101.10.50/display?framebuffer=' + getFrameBuffer();
+        }
+        var lastUploadMillis = Date.now();
+        initDisplay();
+        updateText();
+    </script>
+</div>
+<input type="button" value="send" onclick="uploadBuffer()">
+</div><!-- /.container -->
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+        integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
