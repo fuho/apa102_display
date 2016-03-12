@@ -74,6 +74,14 @@ uint8_t hexToInt(String twoChars){
     return (uint8_t) strtoul(twoChars.c_str(),NULL,16);
 }
 
+String intToHex(uint8_t value){
+    String result = "xX";
+//    std::ostringstream stream;
+//    stream << std::hex << value;
+//    return stream.str();
+    return result;
+}
+
 void setBrushColor(rgb_color color){
  brushColor = color;
 }
@@ -85,8 +93,8 @@ void setBrushColor(uint8_t r,uint8_t g,uint8_t b){
 void setBrushColor(String colorAsString){
     uint8_t r,g,b;
     r= hexToInt(colorAsString.substring(0,1));
-    g= hexToInt(colorAsString.substring(0,1));
-    b= hexToInt(colorAsString.substring(0,1));
+    g= hexToInt(colorAsString.substring(2,3));
+    b= hexToInt(colorAsString.substring(4,5));
     setBrushColor(r,g,b);
 }
 
@@ -102,6 +110,24 @@ void drawPixel(uint8_t x, uint8_t y){
     } else {
     colors[(y+1) * displayWidth -1 - x] = brushColor;
     }
+}
+
+rgb_color readPixel(uint8_t x, uint8_t y){
+    // If user reading outside of display
+    if(x >= displayWidth || y >= displayHeight) return (rgb_color) {256,256,256};
+    if(y % 2 == 0){// Display is a zigzaged LED strip
+    return colors[y * displayWidth + x];
+    } else {
+    return colors[(y+1) * displayWidth -1 - x];
+    }
+}
+
+String colorToString(rgb_color color){
+    String result = "";
+    result += intToHex(color.red);
+    result += intToHex(color.green);
+    result += intToHex(color.blue);
+    return  result;
 }
 
 void updateDisplay(){
@@ -158,6 +184,16 @@ void handleDisplayRequest(){
     }
 }
 
+String getFrameBufferString(){
+    String frameBufferString = "";
+    for(int y = 0; y < displayHeight; y++){
+        for(int x = 0; x < displayWidth; x++){
+            frameBufferString += colorToString(readPixel(x,y));
+        }
+    }
+    return frameBufferString;
+}
+
 
 void setup() {
   WiFi.mode(WIFI_STA);
@@ -185,7 +221,7 @@ void setup() {
 
   server.on(URL_DISPLAY, [](){
     handleDisplayRequest();    
-    server.send(200, "text/plain", String(micros()));
+    server.send(200, "text/plain", getFrameBufferString());
   });
   server.begin();
 }
