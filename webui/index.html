@@ -101,12 +101,24 @@
         function uploadBuffer(){
             (new Image).src = 'http://10.101.10.50/display?framebuffer=' + getFrameBuffer();
         }
+        
+        function clearDisplay(value = "#000000"){
+            [].slice.call(
+                    document.getElementById("ledDisplay").getElementsByTagName("input")
+            ).map(function(pixel){pixel.value = value;});
+            updateText();
+            uploadBuffer();
+        }
+        
+        
         var lastUploadMillis = Date.now();
         initDisplay();
         updateText();
     </script>
 </div>
-<input type="button" value="send" onclick="uploadBuffer()">
+<input type="button" value="All White" onclick="clearDisplay('#ffffff')";>
+<input type="button" value="All Black" onclick="clearDisplay();">
+<input type="button" value="send" onclick="uploadBuffer();">
 </div><!-- /.container -->
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
