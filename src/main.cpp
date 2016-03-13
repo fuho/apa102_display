@@ -19,7 +19,7 @@ const char* PARAM_FRAME_BUFFER = "framebuffer";
 const uint8_t displayWidth = 18;
 const uint8_t displayHeight = 8;
 const uint16_t ledCount = displayWidth * displayHeight;
-const uint8_t brightness = 1;
+ uint8_t brightness = 3;
 rgb_color colors[ledCount];
 // Defaults
 rgb_color brushColor = (rgb_color){0,0,0}; // Default brush color is black
@@ -168,14 +168,29 @@ String getArgsInfo(){
     return response;
 }
 
-void setFrameBuffer(String colorsAsString){
-    for(int y =0; y < displayHeight; y++){
-        for(int x =0; x < displayWidth; x++){
-            String colorAsString = colorsAsString.substring(x*y*3,x*y*3+3);
-            setBrushColor(colorAsString);
-            drawPixel(x,y);
+String setFrameBuffer(String framebuffer){
+    const unsigned int pixelLength = 6; 
+    unsigned int index;
+    String response = "";
+    String colorStr = "";
+    int strLen = framebuffer.length();
+    for(int y = 0; y < displayHeight; y++){
+        response += "\n Row " + String(y) + ": ";
+        for(int x = 0; x < displayWidth; x++){
+            index = pixelLength * (y * displayWidth + x) ; 
+            if(index + pixelLength <= strLen){
+                colorStr = framebuffer.substring(index,index + pixelLength);
+                setBrushColor(colorStr);
+                drawPixel(x,y);
+                response += "[" + String(x) + "," + String(y) + ":" + String(index) + ">" + colorStr+"]";
+            } else {
+                setBrushColor(0,0,0);
+                drawPixel(x,y);
+                response += "{" + String(x) + "," + String(y) + ":" + String(index) + ">......}";
+            }
         }
     }
+    return response;
 }
 
 void handleDisplayRequest(){
@@ -220,8 +235,9 @@ void setup() {
   });
 
   server.on(URL_DISPLAY, [](){
-    handleDisplayRequest();    
-    server.send(200, "text/plain", getFrameBufferString());
+//    handleDisplayRequest();    
+    
+    server.send(200, "text/plain", setFrameBuffer(server.arg(PARAM_FRAME_BUFFER)));
   });
   server.begin();
 }
