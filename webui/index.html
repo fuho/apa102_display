@@ -73,6 +73,7 @@
             ledPixel.setAttribute("type", "color");
             ledPixel.setAttribute("value", "#000000");
             ledPixel.addEventListener("input", function () {
+                updateCanvas();
                 updateText();
                 var newMillis = Date.now();
                 if (newMillis - lastUploadMillis > 300) {
@@ -119,10 +120,36 @@
         }
 
 
+        function updateCanvas() {
+            var canvas = document.getElementById('displayCanvas');
+            var ctx = canvas.getContext('2d');
+            var frameBuffer = getFrameBuffer();
+            var width = 18;
+            var height = 8;
+            var pixelLength = 6;
+            for (var y = 0; y < height; y++) {
+                for (var x = 0; x < width; x++) {
+                    var index = (y * width + x) * pixelLength;
+                    var pixel = frameBuffer.substring(index, index + pixelLength);
+                    var r = parseInt(pixel.substring(0, 2), 16);
+                    var g = parseInt(pixel.substring(2, 4), 16);
+                    var b = parseInt(pixel.substring(4), 16);
+                    ctx.putImageData(new ImageData(new Uint8ClampedArray([r, g, b, 255]), 1, 1), x, y);
+                }
+            }
+        }
+
+
         var lastUploadMillis = Date.now();
         initDisplay();
         updateText();
     </script>
+    <canvas
+            id="displayCanvas"
+            width="18"
+            height="8"
+            style="width:288px;height:128px;border: 1px solid steelblue;image-rendering:pixelated;"
+            ></canvas>
     <div id="displayControls">
         <input
                 type="button"
