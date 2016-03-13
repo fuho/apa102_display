@@ -15,11 +15,12 @@ const char* URL_ARGS = "/args";
 const char* URL_DISPLAY = "/display";
 // URL Parameters
 const char* PARAM_FRAME_BUFFER = "framebuffer";
+const char* PARAM_DISPLAY_BRIGHTNESS = "brightness";
 
 const uint8_t displayWidth = 18;
 const uint8_t displayHeight = 8;
 const uint16_t ledCount = displayWidth * displayHeight;
- uint8_t brightness = 3;
+uint8_t displayBrightness = 3;
 rgb_color colors[ledCount];
 // Defaults
 rgb_color brushColor = (rgb_color){0,0,0}; // Default brush color is black
@@ -131,7 +132,7 @@ String colorToString(rgb_color color){
 }
 
 void updateDisplay(){
-      ledStrip.write(colors, ledCount, brightness);
+      ledStrip.write(colors, ledCount, displayBrightness);
 }
 
 void drawRect(uint8_t minX, uint8_t minY, uint8_t width, uint8_t height){
@@ -168,34 +169,37 @@ String getArgsInfo(){
     return response;
 }
 
-String setFrameBuffer(String framebuffer){
+void setFrameBuffer(String framebuffer){
     const unsigned int pixelLength = 6; 
     unsigned int index;
-    String response = "";
     String colorStr = "";
     int strLen = framebuffer.length();
     for(int y = 0; y < displayHeight; y++){
-        response += "\n Row " + String(y) + ": ";
         for(int x = 0; x < displayWidth; x++){
             index = pixelLength * (y * displayWidth + x) ; 
             if(index + pixelLength <= strLen){
                 colorStr = framebuffer.substring(index,index + pixelLength);
                 setBrushColor(colorStr);
                 drawPixel(x,y);
-                response += "[" + String(x) + "," + String(y) + ":" + String(index) + ">" + colorStr+"]";
             } else {
                 setBrushColor(0,0,0);
                 drawPixel(x,y);
-                response += "{" + String(x) + "," + String(y) + ":" + String(index) + ">......}";
             }
         }
     }
-    return response;
+}
+
+void setDisplayBrightness(String brightness){
+    displayBrightness = atoi( brightness.c_str() );
+    updateDisplay();
 }
 
 void handleDisplayRequest(){
     if(server.hasArg(PARAM_FRAME_BUFFER)){
         setFrameBuffer(server.arg(PARAM_FRAME_BUFFER));
+    }
+    if(server.hasArg(PARAM_DISPLAY_BRIGHTNESS)){
+        setDisplayBrightness(server.arg(PARAM_DISPLAY_BRIGHTNESS));
     }
 }
 
@@ -235,9 +239,8 @@ void setup() {
   });
 
   server.on(URL_DISPLAY, [](){
-//    handleDisplayRequest();    
-    
-    server.send(200, "text/plain", setFrameBuffer(server.arg(PARAM_FRAME_BUFFER)));
+  server.send(200, "text/plain");
+  handleDisplayRequest();    
   });
   server.begin();
 }
