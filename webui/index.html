@@ -52,7 +52,8 @@
 
     <div id="ledDisplay">
     </div>
-    <div id="bufferString" style="white-space:pre;font-family: monospace;font-size: x-small; letter-spacing:0.03em;"></div>
+    <div id="bufferString"
+         style="white-space:pre;font-family: monospace;font-size: x-small; letter-spacing:0.03em;"></div>
     <script>
         function initDisplay() {
             var width = 18;
@@ -64,17 +65,17 @@
                 }
                 ledDisplay.appendChild(document.createElement("br"));
             }
-            
+
         }
 
-        function newPixel(){
+        function newPixel() {
             var ledPixel = document.createElement("input");
-            ledPixel.setAttribute("type","color");
-            ledPixel.setAttribute("value","#000000");
-            ledPixel.addEventListener("input", function() {
+            ledPixel.setAttribute("type", "color");
+            ledPixel.setAttribute("value", "#000000");
+            ledPixel.addEventListener("input", function () {
                 updateText();
                 var newMillis = Date.now();
-                if(newMillis - lastUploadMillis > 300){
+                if (newMillis - lastUploadMillis > 300) {
                     lastUploadMillis = newMillis;
                     uploadBuffer()
                 }
@@ -98,27 +99,59 @@
             document.getElementById("bufferString").textContent = splitText;
         }
 
-        function uploadBuffer(){
+        function uploadBuffer() {
             (new Image).src = 'http://10.101.10.50/display?framebuffer=' + getFrameBuffer();
         }
-        
-        function clearDisplay(value = "#000000"){
+
+        function clearDisplay(value = "#000000") {
             [].slice.call(
                     document.getElementById("ledDisplay").getElementsByTagName("input")
-            ).map(function(pixel){pixel.value = value;});
+            ).map(function (pixel) {
+                        pixel.value = value;
+                    });
             updateText();
             uploadBuffer();
         }
-        
-        
+
+        function updateBrightness() {
+            var brightness = document.getElementById("controlDisplayBrightness").value;
+            (new Image).src = 'http://10.101.10.50/display?brightness=' + brightness;
+        }
+
+
         var lastUploadMillis = Date.now();
         initDisplay();
         updateText();
     </script>
+    <div id="displayControls">
+        <input
+                type="button"
+                value="All White"
+                onclick="clearDisplay('#ffffff')"
+                />
+        <input
+                type="button"
+                value="All Black"
+                onclick="clearDisplay();"
+                />
+        <input
+                type="button"
+                value="send"
+                onclick="uploadBuffer();"
+                />
+        <input
+                id="controlDisplayBrightness"
+                title="Brightness"
+                type=range
+                min=0
+                max=31
+                step=1
+                value=1
+                onchange="updateBrightness();"
+                style="display: inline-block;width: 200px;"
+                />
+    </div>
 </div>
-<input type="button" value="All White" onclick="clearDisplay('#ffffff')";>
-<input type="button" value="All Black" onclick="clearDisplay();">
-<input type="button" value="send" onclick="uploadBuffer();">
 </div><!-- /.container -->
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
